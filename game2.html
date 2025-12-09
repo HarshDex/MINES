@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mines & Gems - Fun Points Only</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: #0b1120;
+      --tile: #020617;
+      --tile-border: #111827;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.08);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.16);
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #0f172a 0, #020617 40%, #000 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text-main);
+      padding: 16px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 960px;
+      background: linear-gradient(130deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96));
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.35);
+      box-shadow: 0 26px 80px rgba(15,23,42,0.9);
+      padding: 18px 18px 20px;
+    }
+    @media (min-width: 768px) { .shell { padding: 22px 24px 26px; } }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .title-block h1 {
+      font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+      letter-spacing: 0.04em;
+    }
+
+    .tag-pill {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(34,197,94,0.8);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .stats {
+      min-width: 210px;
+      background: rgba(15,23,42,0.96);
+      border-radius: 16px;
+      border: 1px solid rgba(55,65,81,0.9);
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .stat-label { color: var(--text-muted); }
+    .stat-value { font-weight: 600; }
+    .stat-value.green { color: var(--accent); }
+    .stat-value.red { color: var(--danger); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr);
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    .left-panel {
+      background: var(--panel);
+      border-radius: 18px;
+      border: 1px solid rgba(55,65,81,0.9);
+      padding: 14px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-title { font-size: 0.9rem; font-weight: 600; }
+    .panel-help { font-size: 0.78rem; color: var(--text-muted); }
+
+    .form-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .field {
+      flex: 1 1 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.78rem;
+    }
+
+    .field label { color: var(--text-muted); }
+
+    .field input,
+    .field select {
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(55,65,81,0.9);
+      background: rgba(15,23,42,0.96);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(34,197,94,0.85);
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.4);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.96);
+      color: var(--text-main);
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.16s ease-out, transform 0.08s ease-out, opacity 0.12s ease-out;
+    }
+    .btn.primary {
+      border-color: rgba(34,197,94,0.95);
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: #ecfdf5;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .btn.danger {
+      border-color: rgba(239,68,68,0.95);
+      background: linear-gradient(135deg, #b91c1c, #ef4444);
+      color: #fee2e2;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .btn:active { transform: translateY(1px) scale(0.99); }
+    .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+    .info-line { font-size: 0.78rem; color: var(--text-muted); }
+    .info-line strong { color: var(--text-main); }
+
+    .message-bar {
+      margin-top: 4px;
+      padding: 7px 9px;
+      border-radius: 14px;
+      background: rgba(15,23,42,0.96);
+      border: 1px solid rgba(55,65,81,0.9);
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .message-bar.good {
+      border-color: rgba(34,197,94,0.9);
+      background: var(--accent-soft);
+    }
+    .message-bar.bad {
+      border-color: rgba(239,68,68,0.95);
+      background: var(--danger-soft);
+    }
+    .message-icon { font-size: 1rem; }
+
+    .board-wrapper {
+      background: var(--panel);
+      border-radius: 18px;
+      border: 1px solid rgba(55,65,81,0.9);
+      padding: 14px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .board-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .board-grid {
+      margin-top: 4px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .tile {
+      position: relative;
+      background: var(--tile);
+      border-radius: 10px;
+      border: 1px solid var(--tile-border);
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      transition: background 0.15s ease-out, transform 0.08s ease-out, border-color 0.15s ease-out;
+      aspect-ratio: 1 / 1;
+    }
+    .tile:hover {
+      background: #020617;
+      border-color: rgba(148,163,184,0.3);
+    }
+    .tile:active { transform: translateY(1px) scale(0.98); }
+
+    .tile.revealed.safe {
+      background: radial-gradient(circle at top, rgba(22,163,74,0.4), #022c22);
+      border-color: rgba(34,197,94,0.9);
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.5);
+    }
+    .tile.revealed.mine {
+      background: radial-gradient(circle at top, rgba(239,68,68,0.5), #450a0a);
+      border-color: rgba(248,113,113,0.95);
+      box-shadow: 0 0 0 1px rgba(248,113,113,0.6);
+    }
+    .tile.disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+
+    .legend {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .legend strong { color: var(--text-main); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="title-block">
+        <h1>Mines & Gems</h1>
+        <span class="tag-pill">FAKE COINS · NO REAL MONEY</span>
+        <p class="subtitle">
+          Put 1–5 fake coins, avoid red mines and open green gems. Each safe gem slowly increases the
+          multiplier at the start, then big jumps later. Max multiplier is <strong>24x</strong>.
+        </p>
+      </div>
+      <div class="stats">
+        <div class="stat-row">
+          <span class="stat-label">Fake coins balance</span>
+          <span class="stat-value green" id="balance-display">50</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Current stake</span>
+          <span class="stat-value" id="stake-display">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Multiplier</span>
+          <span class="stat-value" id="multiplier-display">1.00x</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Potential payout</span>
+          <span class="stat-value" id="payout-display">0</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- LEFT: controls -->
+      <section class="left-panel">
+        <div>
+          <div class="panel-title">Set up your round</div>
+          <p class="panel-help">
+            Choose fake coin stake (1–5) and mines. Start a round, then click tiles.
+            Every safe gem increases the multiplier. One mine loses that round’s stake.
+          </p>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="stake-select">Stake (fake coins)</label>
+            <select id="stake-select">
+              <option value="1">1 coin</option>
+              <option value="2">2 coins</option>
+              <option value="3" selected>3 coins</option>
+              <option value="4">4 coins</option>
+              <option value="5">5 coins</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="mines-select">Number of mines</label>
+            <select id="mines-select">
+              <option value="3">3 mines (easy)</option>
+              <option value="5" selected>5 mines</option>
+              <option value="7">7 mines</option>
+              <option value="10">10 mines (hard)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="btn primary" id="start-button">Start Round</button>
+          <button class="btn danger" id="cashout-button" disabled>Cash Out</button>
+        </div>
+
+        <p class="info-line">
+          <strong>After each gem</strong> you’ll see the new multiplier and payout. Cash out any time before a mine.
+        </p>
+
+        <div class="message-bar" id="message-bar">
+          <span class="message-icon" id="msg-icon">✨</span>
+          <span id="msg-text">
+            Choose stake between <strong>1–5 fake coins</strong> and press <strong>Start Round</strong>.
+            This is only for fun with cousins – no real money, no prizes.
+          </span>
+        </div>
+      </section>
+
+      <!-- RIGHT: board -->
+      <section class="board-wrapper">
+        <div class="board-header">
+          <span>25 tiles total · avoid the red mines, open the green gems.</span>
+          <span id="status-text">No round active.</span>
+        </div>
+
+        <div class="board-grid" id="board"></div>
+
+        <p class="legend">
+          <strong>Multiplier rules:</strong> first 1–14 safe gems increase the multiplier slowly,
+          then it starts jumping a lot. Max multiplier is <strong>24x</strong> on very deep runs.
+          All coins are virtual; nothing here is real money.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const BOARD_SIZE = 25; // 5x5
+      const INITIAL_BALANCE = 50;
+
+      // Multiplier table: index = number of safe gems opened
+      // 0 = 1.00x, 1–14 slow, 15–24 big jumps, max 24x
+      const MULTIPLIER_TABLE = [
+        1.0,   // 0 gems
+        1.05,  // 1
+        1.10,  // 2
+        1.15,  // 3
+        1.20,  // 4
+        1.25,  // 5
+        1.30,  // 6
+        1.40,  // 7
+        1.50,  // 8
+        1.60,  // 9
+        1.70,  //10
+        1.80,  //11
+        1.90,  //12
+        2.00,  //13
+        2.20,  //14  (very slow up to here)
+        4.00,  //15
+        6.00,  //16
+        8.00,  //17
+        10.00, //18
+        12.00, //19
+        14.00, //20
+        16.00, //21
+        18.00, //22
+        21.00, //23
+        24.00  //24 max
+      ];
+
+      const balanceDisplay = document.getElementById('balance-display');
+      const stakeDisplay = document.getElementById('stake-display');
+      const multiplierDisplay = document.getElementById('multiplier-display');
+      const payoutDisplay = document.getElementById('payout-display');
+      const stakeSelect = document.getElementById('stake-select');
+      const minesSelect = document.getElementById('mines-select');
+      const startButton = document.getElementById('start-button');
+      const cashoutButton = document.getElementById('cashout-button');
+      const messageBar = document.getElementById('message-bar');
+      const msgText = document.getElementById('msg-text');
+      const msgIcon = document.getElementById('msg-icon');
+      const boardEl = document.getElementById('board');
+      const statusText = document.getElementById('status-text');
+
+      const state = {
+        balance: INITIAL_BALANCE,
+        inRound: false,
+        tiles: [],
+        mines: new Set(),
+        revealed: new Set(),
+        safeRevealed: 0,
+        stake: 0,
+        minesCount: 5,
+        multiplier: 1,
+        busted: false
+      };
+
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      function formatNumber(n) {
+        return n.toLocaleString('en-IN');
+      }
+
+      function getMultiplierFromGems(count) {
+        const idx = Math.max(0, Math.min(count, MULTIPLIER_TABLE.length - 1));
+        return MULTIPLIER_TABLE[idx];
+      }
+
+      function setMessage(text, good = true) {
+        msgText.innerHTML = text;
+        messageBar.classList.toggle('good', good);
+        messageBar.classList.toggle('bad', !good);
+        msgIcon.textContent = good ? '✨' : '⚠️';
+      }
+
+      function updateUI() {
+        balanceDisplay.textContent = formatNumber(state.balance);
+        stakeDisplay.textContent = formatNumber(state.stake);
+        multiplierDisplay.textContent = state.multiplier.toFixed(2) + 'x';
+
+        const potential = Math.floor(state.stake * state.multiplier);
+        payoutDisplay.textContent = formatNumber(
+          state.inRound && !state.busted && state.safeRevealed > 0 ? potential : 0
+        );
+
+        cashoutButton.disabled = !state.inRound || state.safeRevealed === 0 || state.busted;
+
+        if (!state.inRound) {
+          statusText.textContent = 'No round active.';
+        } else if (state.busted) {
+          statusText.textContent = 'Mine hit – round over.';
+        } else {
+          statusText.textContent =
+            'Round active · Safe gems: ' +
+            state.safeRevealed +
+            ' · Mines: ' +
+            state.minesCount +
+            ' · Multiplier: ' +
+            state.multiplier.toFixed(2) +
+            'x';
+        }
+      }
+
+      function createBoard() {
+        boardEl.innerHTML = '';
+        state.tiles = [];
+        for (let i = 0; i < BOARD_SIZE; i++) {
+          const tile = document.createElement('button');
+          tile.className = 'tile disabled';
+          tile.dataset.index = i;
+          tile.addEventListener('click', () => handleTileClick(i));
+          boardEl.appendChild(tile);
+          state.tiles.push(tile);
+        }
+      }
+
+      function startRound() {
+        const stakeVal = parseInt(stakeSelect.value, 10);
+        const minesCount = parseInt(minesSelect.value, 10);
+
+        if (stakeVal < 1 || stakeVal > 5) {
+          setMessage('Stake must be between 1 and 5 fake coins.', false);
+          return;
+        }
+        if (stakeVal > state.balance) {
+          setMessage('Not enough fake coins. Lower the stake or reset your balance.', false);
+          return;
+        }
+        if (minesCount <= 0 || minesCount >= BOARD_SIZE) {
+          setMessage('Invalid mines count.', false);
+          return;
+        }
+
+        state.balance -= stakeVal;
+        state.stake = stakeVal;
+        state.minesCount = minesCount;
+        state.safeRevealed = 0;
+        state.multiplier = getMultiplierFromGems(0);
+        state.revealed.clear();
+        state.mines.clear();
+        state.inRound = true;
+        state.busted = false;
+
+        const indices = shuffle([...Array(BOARD_SIZE).keys()]);
+        for (let i = 0; i < minesCount; i++) {
+          state.mines.add(indices[i]);
+        }
+
+        state.tiles.forEach((tile) => {
+          tile.className = 'tile';
+          tile.textContent = '';
+        });
+
+        setMessage(
+          'Round started with <strong>' +
+            stakeVal +
+            '</strong> fake coins and <strong>' +
+            minesCount +
+            '</strong> mines. Open gems carefully – multiplier will grow up to <strong>24x</strong>.',
+          true
+        );
+        startButton.textContent = 'New Round';
+        updateUI();
+      }
+
+      function handleTileClick(index) {
+        if (!state.inRound || state.busted) return;
+        if (state.revealed.has(index)) return;
+
+        const tile = state.tiles[index];
+        state.revealed.add(index);
+
+        if (state.mines.has(index)) {
+          // mine
+          tile.classList.add('revealed', 'mine');
+          tile.textContent = '💣';
+          state.busted = true;
+
+          state.mines.forEach((idx) => {
+            const t = state.tiles[idx];
+            if (!t.classList.contains('revealed')) {
+              t.classList.add('revealed', 'mine');
+              t.textContent = '💣';
+            }
+          });
+
+          state.tiles.forEach((t) => t.classList.add('disabled'));
+
+          setMessage(
+            'Boom! You opened a mine and lost this round’s stake of <strong>' +
+              state.stake +
+              '</strong> fake coins. Start a new round to try again.',
+            false
+          );
+          updateUI();
+          return;
+        }
+
+        // safe gem
+        tile.classList.add('revealed', 'safe');
+        tile.textContent = '💎';
+        state.safeRevealed += 1;
+        state.multiplier = getMultiplierFromGems(state.safeRevealed);
+
+        const potential = Math.floor(state.stake * state.multiplier);
+        setMessage(
+          'Safe gem #' +
+            state.safeRevealed +
+            '! Multiplier is now <strong>' +
+            state.multiplier.toFixed(2) +
+            'x</strong> → potential payout <strong>' +
+            potential +
+            '</strong> fake coins. Cash out or keep going!',
+          true
+        );
+        updateUI();
+      }
+
+      function cashOut() {
+        if (!state.inRound || state.busted || state.safeRevealed === 0) return;
+
+        const payout = Math.floor(state.stake * state.multiplier);
+        const profit = payout - state.stake;
+        state.balance += payout;
+
+        state.inRound = false;
+        state.tiles.forEach((t) => t.classList.add('disabled'));
+
+        setMessage(
+          'You cashed out at <strong>' +
+            state.multiplier.toFixed(2) +
+            'x</strong> for <strong>' +
+            payout +
+            '</strong> fake coins (profit: +' +
+            profit +
+            '). New round whenever you want.',
+          true
+        );
+        updateUI();
+      }
+
+      startButton.addEventListener('click', startRound);
+      cashoutButton.addEventListener('click', cashOut);
+
+      // init
+      createBoard();
+      updateUI();
+      setMessage(
+        'Choose stake (1–5 fake coins) and mines, then press <strong>Start Round</strong>. Multiplier grows slowly at first, then jumps – max 24x.',
+        true
+      );
+    })();
+  </script>
+</body>
+</html>
